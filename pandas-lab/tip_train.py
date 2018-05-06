@@ -10,6 +10,7 @@ import pandas as pd
 
 from sklearn.model_selection import train_test_split  # 训练集数据拆分
 from sklearn.model_selection import GridSearchCV  # 参数调优
+from sklearn.model_selection import StratifiedKFold
 
 
 from sklearn.ensemble import BaggingClassifier
@@ -100,7 +101,7 @@ def xgb_model():
     dtrain = xgb.DMatrix(train_x, label=train_y)
     dtest = xgb.DMatrix(test_x)
 
-    ceate_feature_map(dtrain.columns)
+    # ceate_feature_map(dtrain.columns)
 
     params = {'booster': 'gbtree',
               'objective': 'binary:logistic',
@@ -113,18 +114,20 @@ def xgb_model():
               'eta': 0.025,
               'seed': 0,
               'nthread': 8,
-              'silent': 1}
+              'silent': 1,
+              'verbose': True}
 
     watchlist = [(dtrain, 'train')]
 
     # 训练模型
-    bst = xgb.train(params, dtrain, num_boost_round=100, evals=watchlist)
+    bst = xgb.train(params, dtrain, num_boost_round=50, evals=watchlist)
 
     # 预测
     ypred = bst.predict(dtest)
 
     # 设置阈值, 输出一些评价指标
-    y_pred = (ypred >= 0.7) * 1
+    y_pred = (ypred > 0.5) * 1
+    # predictions = [round(value) for value in y_pred]
 
 
     print('AUC: %.4f' % metrics.roc_auc_score(test_y,ypred))
@@ -138,8 +141,30 @@ def xgb_model():
     print(ypred_leaf)
 
     xgb.to_graphviz(bst, num_trees=0)
-    plot_tree(bst, fmap='xgb.fmap')
+    # plot_tree(bst, fmap='xgb.fmap')
+    # plt.show()
+
+    plot_importance(bst)
     plt.show()
+
+def opti_model(X, Y):
+    model = xgb.XGBClassifier()
+    learning_rate = [0.0001, 0.001, 0.01, 0.1, 0.2, 0.3]
+    param_grid = dict(learning_rate=learning_rate)
+
+    kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=7)
+    grid_search = GridSearchCV(model, param_grid, scoring="neg_log_loss", n_jobs=-1, cv=kfold)
+    grid_result = grid_search.fit(X, Y)
+    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
+
+    return model
+
 
 if __name__ == '__main__':
     # df = loaddata()
