@@ -107,7 +107,7 @@ def xgb_model():
               'objective': 'binary:logistic',
               'eval_metric': 'auc',  # ROC曲线下的面积 真阳性率与假阳性率之间的关系
               'max_depth': 4,
-              'lambda': 10,
+              'lambda': 10,          # l2 正则化 alpha l1 适用于很高维度情况下，加快算法速度
               'subsample': 0.75,
               'colsample_bytree': 0.75,
               'min_child_weight': 2,
@@ -165,6 +165,78 @@ def opti_model(X, Y):
 
     return model
 
+
+test_results = pd.read_csv('test_results.csv')
+train = pd.read_csv('train_modified.csv')
+target = 'Disbursed'
+IDcol = 'ID'
+
+def modelfit(alg, dtrain, dtest, predictors, useTrainCV=True, cv_folds=5, early_stopping_rounds=50):
+    if useTrainCV:
+        xgb_param = alg.get_xgb_params()
+        xgtrain = xgb.DMatrix(dtrain[predictors].values, label=dtrain[target].values)
+        xgtest = xgb.DMatrix(dtest[predictors].values)
+        cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
+                          metrics='auc', early_stopping_rounds=early_stopping_rounds, show_progress=False)
+        alg.set_params(n_estimators=cvresult.shape[0])
+
+    # Fit the algorithm on the data
+    alg.fit(dtrain[predictors], dtrain['Disbursed'], eval_metric='auc')
+
+    # Predict training set:
+    dtrain_predictions = alg.predict(dtrain[predictors])
+    dtrain_predprob = alg.predict_proba(dtrain[predictors])[:, 1]
+
+    # Print model report:
+    print(   "\nModel Report")
+    print(    "Accuracy : %.4g" % metrics.accuracy_score(dtrain['Disbursed'].values, dtrain_predictions))
+    print(    "AUC Score (Train): %f" % metrics.roc_auc_score(dtrain['Disbursed'], dtrain_predprob))
+
+    #     Predict on testing data:
+    dtest['predprob'] = alg.predict_proba(dtest[predictors])[:, 1]
+    results = test_results.merge(dtest[['ID', 'predprob']], on='ID')
+    print(    'AUC Score (Test): %f' % metrics.roc_auc_score(results['Disbursed'], results['predprob']))
+
+    feat_imp = pd.Series(alg.booster().get_fscore()).sort_values(ascending=False)
+    feat_imp.plot(kind='bar', title='Feature Importances')
+    # plt.ylabel('Feature Importance Score')
+
+
+predictors = [x for x in train.columns if x not in [target, IDcol]]
+xgb1 = xgb.XGBClassifier(
+        learning_rate=0.1, # 0.01 - .2
+        n_estimators=1000, #
+        max_depth=5,       #
+        min_child_weight=1,#
+
+        gamma=0,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        objective='binary:logistic',
+        # nthread=4,
+        scale_pos_weight=1,
+        seed=27)
+
+modelfit(xgb1, train, test_results, predictors)
+
+param_test1 = {
+    'max_depth':range(3,10,2),
+    'min_child_weight':range(1,6,2)
+}
+gsearch1 = GridSearchCV(estimator=xgb.XGBClassifier(
+    learning_rate =0.1,
+    n_estimators=140,
+    max_depth=5,
+    min_child_weight=1,
+    gamma=0,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    objective= 'binary:logistic',
+    nthread=4,
+    scale_pos_weight=1,
+    seed=27),
+    param_grid = param_test1, scoring='roc_auc', n_jobs=4, iid=False, cv=5)
+gsearch1.fit(train[predictors],train[target])
 
 if __name__ == '__main__':
     # df = loaddata()
