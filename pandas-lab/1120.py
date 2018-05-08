@@ -108,8 +108,8 @@ if __name__ == '__main__':
     x_test = test[[x for x in test.columns if x not in ["CUST_ID"]]]
 
     # clf = lr_base(X, y)
-    # clf = ensemble1(X, y)
-    clf = xgb(X, y)
+    clf = ensemble1(X, y)
+    # clf = xgb(X, y)
     clf.fit(X, y)
 
     predictions = clf.predict(x_test)
