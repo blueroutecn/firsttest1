@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#coding=utf-8
+# coding=utf-8
 
 import time
 import numpy as np
@@ -12,7 +12,7 @@ from xgboost.sklearn import XGBClassifier
 from sklearn.model_selection import train_test_split  # 训练集数据拆分
 from sklearn.model_selection import GridSearchCV  # 参数调优
 from sklearn.model_selection import StratifiedKFold
-from sklearn import metrics, linear_model # 模型评估
+from sklearn import metrics, linear_model  # 模型评估
 
 from sklearn import preprocessing
 # X_scaled = preprocessing.scale(X)
@@ -29,6 +29,7 @@ from sklearn.ensemble import (GradientBoostingClassifier, VotingClassifier,
 
 from imblearn.over_sampling import SMOTE
 from sklearn.externals import joblib
+
 
 # import matplotlib.pyplot as plt
 
@@ -65,7 +66,7 @@ def loaddata(filename):
              'Fix_Inv_Amt_Trend', 'R3A_CDMA_Inv_Amt', 'R3A_CDMA_Call_Cnt',
              'R3A_CDMA_Call_Dur', 'CDMA_Call_Cnt_Trend', 'CDMA_Call_Dur_Trend',
              'CDMA_Inv_Amt_Trend', 'Csum_Fix_Comp_Cnt', 'Csum_CDMA_Comp_Cnt',
-             'Churn_Flag','qf_flag',
+             'Churn_Flag', 'qf_flag',
              'ls_flag1']
 
     df = df[names]
@@ -75,7 +76,7 @@ def loaddata(filename):
     df['Ccust_CDMA_Cnt'] = df['Ccust_CDMA_Cnt'].map(cdmacnt_proc)
     df['Age'] = df['Age'].map(age_proc)
     df['ls_flag1'] = df['ls_flag1'].map(flag_proc)
-   # df.to_csv("data/test.txt")
+    # df.to_csv("data/test.txt")
     return df
 
 
@@ -140,8 +141,10 @@ def age_proc(data):
     else:
         return 4
 
+
 id = "Prd_Inst_Id"
 flag = "ls_flag1"
+
 
 def weakclf(train):
     X = train[[x for x in train.columns if x not in [id, flag]]]
@@ -154,7 +157,6 @@ def weakclf(train):
 
     model = ensemble1(x_train, y_train)
     model.fit(x_train, y_train)
-
 
     y_train_pred = model.predict(x_train)
     train_report = metrics.classification_report(y_train, y_train_pred)
@@ -180,19 +182,21 @@ def train_data(train):
                               objective='binary:logistic',
                               scale_pos_weight=1,
                               seed=5,
-#                              nthread=12,
+                              #                              nthread=12,
                               reg_alpha=0.001)
     model.fit(x_train, y_train)
 
     y_train_pred = model.predict(x_train)
-#    y_test_pred = model.predict(x_test)
+    #    y_test_pred = model.predict(x_test)
     train_report = metrics.classification_report(y_train, y_train_pred)
-#    test_report = metrics.classification_report(y_test, y_test_pred)
+    #    test_report = metrics.classification_report(y_test, y_test_pred)
     print(train_report)
     # plot_importance(model,max_num_features=20)
     # plt.show()
-    
-    joblib.dump(model,'sample1.pkl')
+
+    joblib.dump(model, 'sample1.pkl')
+
+
 #   clf=joblib.load('filename.pkl')
 #    model.save_model('sample.model')
 
@@ -209,7 +213,7 @@ def pred_test(train):
          'f33', 'f34', 'f35', 'f36', 'f37', 'f38', 'f39', 'f40', 'f41', 'f42', 'f43', 'f44', 'f45', 'f46', 'f47', 'f48',
          'f49', 'f50', 'f51', 'f52', 'f53', 'f54', 'f55', 'f56', 'f57', 'f58', 'f59', 'f60', 'f61', 'f62', 'f63', 'f64',
          'f65', 'f66', 'f67', 'f68', 'f69', 'f70', 'f71', 'f72', 'f73', 'f74', 'f75', 'f76', 'f77', 'f78', 'f79', ''
-        'f80',
+                                                                                                                  'f80',
          'f81', 'f82', 'f83'
          ]
     e = [u'Gender_Id',
@@ -238,10 +242,10 @@ def pred_test(train):
          u'Fix_Inv_Amt_Trend', u'R3A_CDMA_Inv_Amt', u'R3A_CDMA_Call_Cnt', u'R3A_CDMA_Call_Dur', u'CDMA_Call_Cnt_Trend',
          u'CDMA_Call_Dur_Trend', u'CDMA_Inv_Amt_Trend',
          u'Csum_Fix_Comp_Cnt', u'Csum_CDMA_Comp_Cnt',
-         u'Churn_Flag','qf_flag'
+         u'Churn_Flag', 'qf_flag'
          ]
 
-    X.rename(columns=dict(zip(e,d)), inplace=True)
+    X.rename(columns=dict(zip(e, d)), inplace=True)
     clf = joblib.load('sample0508.pkl')
     # plot_importance(clf, max_num_features=20)
     # plt.show()
@@ -251,10 +255,48 @@ def pred_test(train):
     test_report = metrics.classification_report(Y, y_test_pred)
     print(test_report)
 
-
     out = pd.DataFrame(
-        {'Prd_Inst_Id': train["Prd_Inst_Id"].as_matrix(), "t": train["ls_flag1"].as_matrix(),'flag': y_test_pred.astype(np.int32),'flag1': y_test_pred1[:,1].astype(np.float)})
+        {'Prd_Inst_Id': train["Prd_Inst_Id"].as_matrix(), "t": train["ls_flag1"].as_matrix(),
+         'flag': y_test_pred.astype(np.int32), 'flag1': y_test_pred1[:, 1].astype(np.float)})
     out.to_csv("out1125.txt", sep=",", columns=["Prd_Inst_Id", "t", "flag", "flag1"], index=False, header=False)
+
+    # submission = pd.DataFrame({
+    #     'Prd_Inst_Id': train["Prd_Inst_Id"].as_matrix(),
+    #     'flag': y_test_pred.astype(np.int32)
+    # })
+    # submission.to_csv('titanic.csv', index=False)
+
+
+# def single_model_stacking(clf):
+#     """用python参加Kaggle的些许经验总结"""
+#     skf = list(StratifiedKFold(y, 10))
+#     dataset_blend_train = np.zeros((Xtrain.shape[0], len(set(y.tolist()))))
+#     # dataset_blend_test = np.zeros((Xtest.shape[0],len(set(y.tolist()))))
+#     dataset_blend_test_list=[]
+#     loglossList=[]
+#     for i, (train, test) in enumerate(skf):
+#     # dataset_blend_test_j = []
+#         X_train = Xtrain[train]
+#         y_train =dummy_y[train]
+#         X_val = Xtrain[test]
+#         y_val = dummy_y[test]
+#         if clf=='NN_fit':
+#             fold_pred,pred=NN_fit(X_train, y_train,X_val,y_val)
+#         if clf=='xgb_fit':
+#             fold_pred,pred=xgb_fit(X_train, y_train,X_val,y_val)
+#         if clf=='lr_fit':
+#             fold_pred,pred=lr_fit(X_train, y_train,X_val,y_val)
+#         print('Fold %d, logloss:%f '%(i,log_loss(y_val,fold_pred)))
+#         dataset_blend_train[test, :] = fold_pred dataset_blend_test_list.append( pred )
+#         loglossList.append(log_loss(y_val,fold_pred))
+#     dataset_blend_test = np.mean(dataset_blend_test_list,axis=0)
+#     print('average log loss is :',np.mean(log_loss(y_val,fold_pred)))
+#     print ("Blending.")
+#     clf = LogisticRegression(multi_class='multinomial',solver='lbfgs')
+#     clf.fit(dataset_blend_train, np.argmax(dummy_y,axis=1))
+#     pred = clf.predict_proba(dataset_blend_test)
+#     return pred
+
 
 def data_explore(df):
     print(df['ls_flag1'].value_counts())
@@ -262,6 +304,7 @@ def data_explore(df):
     df['ls_flag1'].plot(kind='hist')
     # plt.show()
     print(df.info())
+
 
 def opti_clf(train):
     # XGBoost调试参数
@@ -310,8 +353,9 @@ def opti_clf(train):
 
 
 def ensemble1(X, y):
-    clf1 = linear_model.LogisticRegression(penalty='l1', C=0.1, max_iter=200, class_weight='balanced', random_state=2017, )
-    clf2 = RandomForestClassifier(random_state=20, n_estimators=500, max_features=6, max_depth=4,)
+    clf1 = linear_model.LogisticRegression(penalty='l1', C=0.1, max_iter=200, class_weight='balanced',
+                                           random_state=2017, )
+    clf2 = RandomForestClassifier(random_state=20, n_estimators=500, max_features=6, max_depth=4, )
     clf3 = GradientBoostingClassifier(n_estimators=200, learning_rate=0.1, min_samples_split=4, min_samples_leaf=1,
                                       max_depth=3,
                                       max_features=None, subsample=1, random_state=2017)
@@ -342,6 +386,7 @@ def ensemble1(X, y):
     # print clf2
     return eclf
 
+
 if __name__ == '__main__':
     stime = time.time()
     print('start time:{}'.format(stime))
@@ -353,7 +398,4 @@ if __name__ == '__main__':
     # pred_test(df)
 
     etime = time.time()
-    print("end time:{}  duration:{}".format(etime,etime-stime))
-
-
-
+    print("end time:{}  duration:{}".format(etime, etime - stime))
