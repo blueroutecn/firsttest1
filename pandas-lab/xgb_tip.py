@@ -249,6 +249,7 @@ def xgb_cv(X_train, Y_train):
     #     metrics='mae')
     # -24.890
     model = xgb.XGBRegressor(
+        # tree_method=approx,
         learning_rate=0.05,
         n_estimators=1500,
         max_depth=9,
@@ -259,7 +260,8 @@ def xgb_cv(X_train, Y_train):
         gamma=0.4,
         reg_alpha=5,
         reg_lambda=3,
-        metrics='mae')
+        metrics='mae',
+    )
     optimized_GBM = GridSearchCV(
         estimator=model,
         param_grid=cv_params,
