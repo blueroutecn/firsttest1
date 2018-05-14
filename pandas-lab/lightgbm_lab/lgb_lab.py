@@ -87,8 +87,9 @@ def sample(dtrain, dtest):
     }
 
     # 样本分布非平衡数据集
-    param['is_unbalance'] = 'true'
+    param['is_unbalance'] = 'True'
     param['metric'] = 'auc'
+    param['stratified'] = 'True'
 
     # // 03.    cv and train
     bst = lgb.cv(param, train_data, num_boost_round=1000, nfold=3, early_stopping_rounds=30)

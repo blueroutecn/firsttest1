@@ -211,7 +211,8 @@ def lgb_cv(X_train, Y_train):
                               min_split_gain=0.3, reg_alpha=5, reg_lambda=3, metric='mae')
 
     optimized_GBM = GridSearchCV(estimator=model, param_grid=cv_params, scoring='neg_mean_absolute_error', cv=5,
-                                 verbose=1, n_jobs=4)
+                                 verbose=1, n_jobs=4, )
+    # lgb.cv(stratified=True,)
     optimized_GBM.fit(X_train, Y_train)
     evalute_result = optimized_GBM.grid_scores_
     print('每轮迭代运行结果:{0}'.format(evalute_result))
